@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Analyzer Pro</title>
+
+<style>
+
+body{
+background:#020617;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+.box{
+width:380px;
+margin:auto;
+margin-top:20px;
+background:#0f172a;
+padding:25px;
+border-radius:15px;
+box-shadow:0 0 20px #00f0ff;
+}
+
+h2{color:#00f0ff}
+
+input{
+width:90%;
+padding:10px;
+margin:8px;
+border-radius:8px;
+border:none;
+}
+
+button{
+padding:10px 20px;
+margin:6px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
+.green{background:#22c55e;color:white;}
+.red{background:#ef4444;color:white;}
+.blue{background:#00eaff;color:black;}
+
+.result{
+font-size:20px;
+color:gold;
+margin-top:10px;
+}
+
+.history{
+font-size:14px;
+margin-top:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box" id="login">
+
+<h2>LOGIN</h2>
+
+<input id="key" placeholder="Nhập key">
+<button class="blue" onclick="login()">Login</button>
+
+<p id="status"></p>
+
+</div>
+
+<div class="box" id="admin" style="display:none">
+
+<h2>ADMIN PANEL</h2>
+
+<input id="newKey" placeholder="Nhập key mới">
+<input id="days" placeholder="Số ngày (vd:7)">
+
+<button class="blue" onclick="createKey()">Tạo Key</button>
+
+<p id="keyList"></p>
+
+</div>
+
+<div class="box" id="tool" style="display:none">
+
+<h2>DATA ANALYZER</h2>
+
+<input id="hash" placeholder="Nhập hash / MD5">
+
+<button class="blue" onclick="analyze()">Phân tích</button>
+
+<p class="result" id="hashResult"></p>
+
+<hr>
+
+<button class="green" onclick="add('T')">Tài</button>
+<button class="red" onclick="add('X')">Xỉu</button>
+
+<div class="history" id="history"></div>
+
+<p class="result" id="predict"></p>
+
+</div>
+
+<script>
+
+let keys = JSON.parse(localStorage.getItem("keys")||"[]")
+let history=[]
+
+function login(){
+
+let key=document.getElementById("key").value
+
+if(key==="ADMIN123"){
+
+document.getElementById("admin").style.display="block"
+document.getElementById("tool").style.display="block"
+document.getElementById("login").style.display="none"
+return
+
+}
+
+let found=keys.find(k=>k.key===key)
+
+if(!found){
+
+document.getElementById("status").innerText="Key không hợp lệ"
+return
+
+}
+
+if(Date.now()>found.expire){
+
+document.getElementById("status").innerText="Key hết hạn"
+return
+
+}
+
+document.getElementById("login").style.display="none"
+document.getElementById("tool").style.display="block"
+
+}
+
+function createKey(){
+
+let newKey=document.getElementById("newKey").value
+let days=document.getElementById("days").value
+
+let expire=Date.now()+days*24*60*60*1000
+
+keys.push({key:newKey,expire:expire})
+
+localStorage.setItem("keys",JSON.stringify(keys))
+
+showKeys()
+
+}
+
+function showKeys(){
+
+let text=""
+
+keys.forEach(k=>{
+
+let d=new Date(k.expire)
+
+text+=k.key+" (hết hạn "+d.toLocaleDateString()+")<br>"
+
+})
+
+document.getElementById("keyList").innerHTML=text
+
+}
+
+showKeys()
+
+function add(r){
+
+history.push(r)
+
+if(history.length>100){
+
+history.shift()
+
+}
+
+document.getElementById("history").innerText="Lịch sử: "+history.join(" ")
+
+predict()
+
+}
+
+function predict(){
+
+let t=0
+let x=0
+
+history.forEach(i=>{
+
+if(i==="T") t++
+else x++
+
+})
+
+let result=t>x?"XỈU":"TÀI"
+
+document.getElementById("predict").innerText="Gợi ý: "+result
+
+}
+
+function analyze(){
+
+let h=document.getElementById("hash").value
+
+if(h.length<6){
+
+document.getElementById("hashResult").innerText="Hash không hợp lệ"
+return
+
+}
+
+let n=parseInt(h.substring(0,8),16)
+
+let r=n%2==0?"TÀI":"XỈU"
+
+document.getElementById("hashResult").innerText="Kết quả tham khảo: "+r
+
+}
+
+</script>
+
+</body>
+</html>
